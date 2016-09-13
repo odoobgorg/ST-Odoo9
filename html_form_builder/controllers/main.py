@@ -21,7 +21,7 @@ class HtmlFormController(http.Controller):
     def html_thanks(self, **kw):
         return http.request.render('html_form_builder.html_thank_you', {})
 
-    @http.route('/form/sinsert',type="http", auth="public", csrf=True)
+    @http.route('/form/sinsert',type="http", auth="public", csrf=False)
     def my_secure_insert(self, **kwargs):
         
         values = {}
@@ -99,7 +99,7 @@ class HtmlFormController(http.Controller):
             except Exception as e:
                 return "Failed to insert record<br/>\n" + str(e)
                 
-            new_history.record_id = entity_form.id
+            new_history.record_id = new_record.id
  
  
             #Execute all the server actions
@@ -179,7 +179,7 @@ class HtmlFormController(http.Controller):
         else:
             #default values
             for df in entity_form.defaults_values:
-               if df.field_id.ttype == "many2many":
+                if df.field_id.ttype == "many2many":
                     secure_values[df.field_id.name] = [(4, request.env[df.field_id.relation].search([('name','=',df.default_value)])[0].id )]
                 else:
                     secure_values[df.field_id.name] = df.default_value
@@ -191,8 +191,7 @@ class HtmlFormController(http.Controller):
             except Exception as e:
                 return "Failed to insert record<br/>\n" + str(e)
                 
-            new_history.record_id = entity_form.id
- 
+            new_history.record_id = new_record.id 
  
             #Execute all the server actions
             for sa in entity_form.submit_action:

@@ -1,3 +1,12 @@
+v.1.6.10
+========
+* CSS clean to get the drag and drop functing like it should
+* Disabled field size changing, to be replaced with grid system module
+
+v.1.6.9
+=======
+* csrf as causing snipet issues, it will be replaced with an allow external access button with domain whitelist
+
 v.1.6.8
 =======
 * Set default permissions to shut log up

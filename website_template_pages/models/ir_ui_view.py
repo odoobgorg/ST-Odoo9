@@ -11,5 +11,6 @@ class WebsitePageTemplate(models.Model):
 
     _inherit = "ir.ui.view"
         
-    image = fields.Binary(string="Image")
+    image = fields.Binary(string="Image (Obsolete)")
     is_webpage_template = fields.Boolean(string="Webpage Template")
+    template_online = fields.Boolean(string="Webpage Template Online")
