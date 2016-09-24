@@ -4,9 +4,68 @@ odoo.define('html_form_builder_snippets.editor', function (require) {
 var Model = require('web.Model');
 var base = require('web_editor.base');
 var options = require('web_editor.snippets.options');
+var core = require('web.core');
 var session = require('web.session');
 var website = require('website.website');
 var return_string = ""; //Global because I can't change html in session.rpc function
+var ajax = require('web.ajax');
+var qweb = core.qweb;
+
+ajax.loadXML('/html_form_builder_snippets/static/src/xml/html_form_modal10.xml', qweb);
+
+$(function() {
+  $( ".html_form button" ).click(function(e) {
+
+    e.preventDefault();  // Prevent the default submit behavior
+
+    var my_form = $(".html_form form");
+
+    // Prepare form inputs
+    var form_data = my_form.serializeArray();
+
+     var form_values = {};
+            _.each(form_data, function(input) {
+                if (input.name in form_values) {
+                    // If a value already exists for this field,
+                    // we are facing a x2many field, so we store
+                    // the values in an array.
+                    if (Array.isArray(form_values[input.name])) {
+                        form_values[input.name].push(input.value);
+                    } else {
+                        form_values[input.name] = [form_values[input.name], input.value];
+                    }
+                } else {
+                    if (input.value != '') {
+                        form_values[input.name] = input.value;
+                    }
+                }
+            });
+
+    form_values['is_ajax_post'] = "Yes";
+
+    // Post form and handle result
+    ajax.post(my_form.attr('action'), form_values).then(function(result_data) {
+      result_data = $.parseJSON(result_data);
+      if (result_data.status == "error") {
+        for (var i = 0; i < result_data.errors.length; i++) {
+		  //Find the field and make it displays as an error
+          var input = my_form.find("input[name='" + result_data.errors[i].html_name + "']");
+          var parent_div = input.parent("div");
+
+          //Remove any existing help block
+          parent_div.find(".help-block").remove();
+
+          //Insert help block
+          input.after("<span class=\"help-block\">" + result_data.errors[i].error_messsage + "</span>");
+          parent_div.addClass("has-error");
+        }
+      } else if (result_data.status == "success") {
+	      window.location = result_data.redirect_url;
+      }
+    });
+
+  });
+});
 
 options.registry.html_form_builder = options.Class.extend({
     drop_and_build_snippet: function() {
@@ -65,6 +124,41 @@ options.registry.html_form_builder_new = options.Class.extend({
 
 });
 
+options.registry.html_form_builder_field_textbox = options.Class.extend({
+    drop_and_build_snippet: function() {
+        var self = this;
+
+    	this.template = 'html_form_builder_snippets.textbox_config';
+    	self.$modal = $( qweb.render(this.template, {}) );
+
+    	$('body').append(self.$modal);
+    	var datatype_dict = ['char'];
+        var form_model = this.$target.parents().closest(".html_form").attr('data-form-model')
+        var form_id = this.$target.parents().closest(".html_form").attr('data-form-id')
+
+		session.rpc('/form/field/config/textbox', {'data_types':datatype_dict, 'form_model':form_model}).then(function(result) {
+		    self.$modal.find("#field_config_textbox").html(result.field_options_html);
+        });
+
+        $('#htmlTextboxModal').modal('show');
+
+        $('body').on('click', '#save_textbox_field', function() {
+	        var format_validation = self.$modal.find('#html_form_field_format_validation').val();
+            var character_limit = self.$modal.find('#html_form_field_character_limit').val();
+            var field_required = self.$modal.find('#html_form_field_required').is(':checked');
+            var field_id = self.$modal.find('#field_config_textbox').val();
+
+            session.rpc('/form/field/add', {'form_id': form_id, 'field_id': field_id, 'html_type': self.$target.attr('data-form-type'), 'format_validation': format_validation, 'character_limit': character_limit, 'field_required': field_required }).then(function(result) {
+			    self.$target.replaceWith(result.html_string);
+            });
+
+            $('#htmlTextboxModal').modal('hide');
+
+        });
+
+    },
+});
+
 options.registry.html_form_builder_field = options.Class.extend({
     drop_and_build_snippet: function() {
         var self = this;
@@ -99,13 +193,16 @@ options.registry.html_form_builder_field = options.Class.extend({
                         '  </select>'+
                         '</div>'+
                     '</div>'+
-                    '<div class="form-group mb0">'+
+                    '<div class="form-group">'+
                         '<label class="col-sm-3 control-label">Character Limit</label>'+
                         '<div class="col-sm-9">'+
                         '  <input type="number" name="characterLimit" class="form-control" value="100"/>'+
                         '</div>'+
-                    '</div>');
-                    //$add.find('label').append(_t("Add page in menu"));
+                    '</div>'+
+                    '<div class="checkbox mb0">'+
+                        '<label><input type="checkbox" name="form_required_checkbox">Required</label>'+
+                    '</div>'
+                    );
                     $group.after($add);
 
 			        return field_ids;
@@ -113,9 +210,10 @@ options.registry.html_form_builder_field = options.Class.extend({
 			}).then(function (val, field_id, $dialog) {
                 var format_validation = $dialog.find('select[name="formatValidation"]').val();
                 var character_limit = $dialog.find('input[name="characterLimit"]').val();
+                var field_required = $dialog.find('input[name="form_required_checkbox"]').is(':checked');
 
-                session.rpc('/form/field/add', {'form_id': form_id, 'field_id': val, 'html_type': self.$target.attr('data-form-type'), 'format_validation': format_validation, 'character_limit': character_limit }).then(function(result) {
-				    self.$target.html(result.html_string);
+                session.rpc('/form/field/add', {'form_id': form_id, 'field_id': val, 'html_type': self.$target.attr('data-form-type'), 'format_validation': format_validation, 'character_limit': character_limit, 'field_required': field_required }).then(function(result) {
+				    self.$target.replaceWith(result.html_string);
              	});
 			});
 

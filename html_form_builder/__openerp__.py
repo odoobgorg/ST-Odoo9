@@ -1,6 +1,6 @@
 {
     'name': "HTML Form Builder",
-    'version': "1.7.4",
+    'version': "1.8.1",
     'author': "Sythil",
     'category': "Tools",
     'website':'http://sythiltech.com.au',
@@ -12,6 +12,7 @@
         'views/html_form_builder_templates.xml',
         'data/html.form.captcha.csv',
         'data/html.form.field.type.csv',
+        'data/html.form.action.type.csv',
         'security/ir.model.access.csv',
     ],
     'demo': [],

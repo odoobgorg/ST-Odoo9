@@ -1,3 +1,29 @@
+v.1.8.2
+=======
+* Dedicated settings view for textboxes(others fields types will come later)
+
+v.1.8.1
+=======
+* Fail safe form validation for javascript disabled and external forms
+
+v.1.8
+=====
+* Tidy up genersated html
+* Fix issue preventing adding new html fields
+* Misc changes to adapt to new ajax form posting
+
+v.1.7.2
+=======
+* field labels are always bold, required will be reworked
+
+v.1.7.1
+=======
+* Fail safe required validation
+
+v.1.7
+=====
+* Datetime generation
+
 v.1.6.10
 ========
 * CSS clean to get the drag and drop functing like it should

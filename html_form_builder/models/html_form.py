@@ -213,6 +213,13 @@ class HtmlFormAction(models.Model):
     action_type_id = fields.Many2one('html.form.action.type', string="Submit Action")
     setting_name = fields.Char(string="Internal Name", related="action_type_id.internal_name")
     settings_description = fields.Char(string="Settings Description")
+    custom_server_action = fields.Many2one('ir.actions.server',string="Custom Server Action")
+    
+    @api.one
+    @api.onchange('custom_server_action')
+    def _onchange_custom_server_action(self):
+        if self.custom_server_action:
+            self.settings_description = "Server Action: " + self.custom_server_action.name
     
 class HtmlFormActionType(models.Model):
 
@@ -243,7 +250,7 @@ class HtmlFormField(models.Model):
 
     @api.model
     def create(self, values):
-        sequence=self.env['ir.sequence'].get('sequence')
+        sequence=self.env['ir.sequence'].next_by_code('html.form.field')
         values['sequence']=sequence
         return super(HtmlFormField, self).create(values)
 

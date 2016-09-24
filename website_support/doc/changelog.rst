@@ -1,3 +1,29 @@
+v1.7.9
+======
+* Allow changing of partner
+* Swap description for subject in support ticket tree view 
+
+v1.7.8
+======
+* Fix missing permission
+
+v1.7.7
+======
+* New ticket count on partner view
+
+v1.7.6
+======
+* Automatic partner detection
+
+v1.7.5
+======
+* Fix bug when Open state name was changed
+* Fix bug where state would be stuck in Customer replied
+
+v1.7
+====
+* Ticket priority
+
 v1.6
 ====
 * Full email integration

@@ -26,6 +26,58 @@ class SaasMultiDB(http.Controller):
         template_databases = request.env['saas.template.database'].search([])
         return http.request.render('sythil_saas_server.saas_choose_package', {'template_databases': template_databases})
 
+    @http.route('/template/details/<template_id>', type="http", auth="public", website=True)
+    def template_details(self, template_id, **kw):
+        """Lists what is inside the template database"""
+
+        template_database = request.env['saas.template.database'].browse( int(template_id) )
+        
+        #connect to the newly created database
+	db = openerp.sql_db.db_connect(template_database.database_name)
+
+        #Create new registry
+        registry = openerp.modules.registry.RegistryManager.new(template_database.database_name, False, None, update_module=True)
+
+        page_data_applications = ""
+        page_data_builtin = ""
+        page_data_community = ""
+        groups_string = ""
+        
+        buildin_modules_list = []
+        for buildin_module in request.env['saas.modules.builtin'].search([]):
+            buildin_modules_list.append(buildin_module.name)
+
+	#Get a list of all the installed modules
+	with closing(db.cursor()) as cr:
+	    cr.autocommit(True)     # avoid transaction block
+	    
+	    #Application list
+	    application_modules = registry['ir.module.module'].search(cr, SUPERUSER_ID, [('state','=','installed'), ('application','=',True) ])
+	    for installed_module_id in application_modules:
+	        installed_module = registry['ir.module.module'].browse(cr, SUPERUSER_ID, installed_module_id)
+	        page_data_applications += "<h3>" + installed_module.shortdesc + " (" + installed_module.name + ")</h3>"
+	        
+	    #Built in modules
+	    builtin_modules = registry['ir.module.module'].search(cr, SUPERUSER_ID, [('state','=','installed'), ('application','=',False)])
+	    for installed_module_id in builtin_modules:
+	        installed_module = registry['ir.module.module'].browse(cr, SUPERUSER_ID, installed_module_id)
+	        if installed_module.name in buildin_modules_list:
+	            page_data_builtin += "<h3>" + installed_module.shortdesc + " (" + installed_module.name + ")</h3>"
+	    
+	    #Community Modules
+	    community_modules = registry['ir.module.module'].search(cr, SUPERUSER_ID, [('state','=','installed')])
+	    for installed_module_id in community_modules:
+	        installed_module = registry['ir.module.module'].browse(cr, SUPERUSER_ID, installed_module_id)
+	        if installed_module.name not in buildin_modules_list:
+	            page_data_community += "<h3><a href=\"https://www.odoo.com/apps/modules/9.0/" + installed_module.name + "\">" + installed_module.shortdesc + " (" + installed_module.name + ")</a></h3>"
+	            
+	    saas_user_id = registry['ir.model.data'].get_object_reference(cr, SUPERUSER_ID, 'sythil_saas_client', 'saas_user')[1]
+            saas_user = registry['res.users'].browse(cr, SUPERUSER_ID, saas_user_id)
+            for group in saas_user.groups_id:
+                groups_string += "<h3>" + group.display_name + "</h3>\n"
+
+        return http.request.render('sythil_saas_server.template_details', {'page_data_applications': page_data_applications, 'page_data_builtin': page_data_builtin, 'page_data_community':page_data_community, 'template_database': template_database, 'groups_string': groups_string})
+
     @http.route('/try/details', type="http", auth="public", website=True)
     def saas_info(self, **kw):
         """Webpage for users to enter details about thier saas setup"""
@@ -174,10 +226,17 @@ class SaasMultiDB(http.Controller):
 	#get the template database
 	template_database = request.env['saas.template.database'].browse(int(values["package"]))
 	chosen_template = template_database.database_name
-        	    
-	#Add this database to the saas list
-	request.env['saas.database'].create({'name':system_name, 'login': email, 'password': password, 'template_database_id': template_database.id})
 
+        #Create the associated company(res.partner) record
+        saas_tag = request.env['ir.model.data'].sudo().get_object('sythil_saas_server', 'saas_client_tag')
+        new_company = request.env['res.partner'].sudo().create({'name': company, 'company_type':'company', 'email': email, 'category_id': [(4,saas_tag.id)] })
+        new_company.child_ids.sudo().create({'parent_id': new_company.id, 'type':'contact', 'name':person_name, 'email': email, 'category_id': [(4,saas_tag.id)] })
+        
+	#Add this database to the saas list
+	new_saas_database = request.env['saas.database'].create({'name':system_name, 'login': email, 'password': password, 'template_database_id': template_database.id, 'partner_id': new_company.id})
+
+        
+        
         #Create the new database from the template database, disconnecting any users that might be using the template database
         db_original_name = chosen_template
         db_name = system_name

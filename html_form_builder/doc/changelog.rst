@@ -1,3 +1,23 @@
+v1.8.1
+======
+* Fail safe form validation for javascript disabled and external forms
+
+v1.8
+====
+* Change to ajax data post/validation
+
+v1.7.7
+======
+* Sequence fix
+
+v1.7.6
+======
+* Fail safe required validation
+
+v1.7.5
+======
+* Bug fix datetime field in backend
+
 v1.7.4
 ======
 * Record ID fix for external forms
