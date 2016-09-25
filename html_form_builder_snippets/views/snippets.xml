@@ -11,6 +11,7 @@
         <template id="html_builder_front_assert" inherit_id="website.assets_frontend" name="HTML Builder Front Asserts">
             <xpath expr="/t" position="inside">
                 <script src="/html_form_builder_snippets/static/src/js/api.js"></script>
+                <link rel="stylesheet" href="/html_form_builder_snippets/static/src/css/form.css"/>
             </xpath>
         </template>
 
@@ -26,7 +27,11 @@
                 </div>
                 <div data-js='html_form_builder_field_textbox'
 		    data-selector=".hff_textbox"
-		    data-drop-in="#html_fields">
+		    data-drop-in="#html_field_placeholder, #html_fields">
+                </div>
+                <div data-js='html_form_builder_field_textarea'
+		    data-selector=".hff_textarea"
+		    data-drop-in="#html_field_placeholder, #html_fields">
                 </div>
                 <div data-js='html_form_builder_field'
 		    data-selector=".html_form_field"
@@ -122,7 +127,7 @@
         </template>
 
         <template id="s_textarea" name="Textarea">
-            <div class="hff html_form_field form-group" data-form-type="textarea" data-field-id="0">
+            <div class="hff hff_textarea form-group" data-form-type="textarea" data-field-id="0">
                 <label for="field1">Field 1</label>
                 <textarea class="form-control" name="field1"/>
             </div>
