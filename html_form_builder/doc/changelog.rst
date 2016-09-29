@@ -1,3 +1,15 @@
+v1.8.4
+======
+* Input group snippet
+
+v1.8.3
+======
+* New date picker
+
+v1.8.2
+======
+* Radio group layout type
+
 v1.8.1
 ======
 * Fail safe form validation for javascript disabled and external forms

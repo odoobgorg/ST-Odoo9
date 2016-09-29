@@ -10,6 +10,21 @@ import openerp
 
 class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.main.HtmlFormController):
 
+    @http.route('/form/field/config/inputgroup', type="json", auth="user", website=True)
+    def form_field_config_input_group(self, **kw):
+
+        values = {}
+	for field_name, field_value in kw.items():
+            values[field_name] = field_value
+            
+        my_field = request.env['ir.model.fields'].browse( int(values['field_id']) )
+        field_options_html = ""
+        
+        for field in request.env['ir.model.fields'].search([('model_id.model', '=', my_field.relation ), ('ttype','=','char') ] ):
+            field_options_html += "<input type=\"checkbox\" name=\"input_group_fields\" value=\"" + str(field.id) + "\"/> " + str(field.field_description) + " (" + str(field.ttype) + ")<br/>\n"
+ 
+        return {'field_options_html': field_options_html }
+
     @http.route('/form/field/config/general', type="json", auth="user", website=True)
     def form_field_config_general(self, **kw):
 
@@ -55,18 +70,31 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
         html_output += "  <script>\n"
 	html_output += "  $( function() {\n"
 	html_output += "    $( \"#" + field.html_name.encode("utf-8") + "\" ).removeClass(\"hasDatepicker\");\n"
-	html_output += "    $( \"#" + field.html_name.encode("utf-8") + "\" ).datepicker({ dateFormat: 'yy-mm-dd' });\n"
+	html_output += "    $( \"#" + field.html_name.encode("utf-8") + "\" ).datetimepicker({pickTime: false, "
+	
+	if field.setting_date_format == "years":
+	    html_output += "format: 'YYYY-01-01', minViewMode: 'years' });\n"
+
+	if field.setting_date_format == "months":
+	    html_output += "format: 'YYYY-MM-01', minViewMode: 'months' });\n"
+
+	if field.setting_date_format == "days":
+	    html_output += "format: 'YYYY-MM-DD', minViewMode: 'days' });\n"
+	
 	html_output += "  } );\n"
         html_output += "  </script>\n"
         
-        html_output += "<div class=\"hff html_form_field form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+        html_output += "<div class=\"hff hff_date_picker form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
 	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label>\n"
-	html_output += "  <input type=\"text\" class=\"form-control\" id=\"" + field.html_name.encode("utf-8") + "\" name=\"" + field.html_name.encode("utf-8") + "\""
+	html_output += "  <div class=\"input-group date\">\n"
+	html_output += "    <input type=\"text\" class=\"form-control\" id=\"" + field.html_name.encode("utf-8") + "\" name=\"" + field.html_name.encode("utf-8") + "\""
 		                                    
 	if field.setting_general_required == True:
 	    html_output += " required=\"required\""
 	
 	html_output += "/>\n"
+	html_output += "    <span class=\"input-group-addon\"><span class=\"fa fa-calendar\"/></span>\n"
+	html_output += "  </div>\n"
 	html_output += "</div>\n"
 	
 	return html_output
@@ -95,16 +123,17 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
 	html_output += "  } );\n"
         html_output += "  </script>\n"
         
-        html_output += "<div class=\"hff html_form_field form-group date\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
-	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label>\n"	    
-	html_output += "  <input type=\"text\" class=\"form-control\" id=\"" + field.html_name.encode("utf-8") + "\" name=\"" + field.html_name.encode("utf-8") + "\""
+        html_output += "<div class=\"hff hff_datetime_picker form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label>\n"
+	html_output += "  <div class=\"input-group date\">\n"
+	html_output += "    <input type=\"text\" class=\"form-control\" id=\"" + field.html_name.encode("utf-8") + "\" name=\"" + field.html_name.encode("utf-8") + "\""
 		                                    
 	if field.setting_general_required == True:
 	    html_output += " required=\"required\""
 	
 	html_output += "/>\n"
-
-        #html_output += "<span class=\"input-group-addon\"><span class=\"fa fa-calendar\"></span></span>\n"
+	html_output += "    <span class=\"input-group-addon\"><span class=\"fa fa-calendar\"/></span>\n"
+	html_output += "  </div>\n"
 	html_output += "</div>\n"
 	
 	return html_output
@@ -152,17 +181,64 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
 	
 	return html_output
 
+    def _generate_html_input_group(self, field):
+        """Generate input group HTML"""
+        html_output = ""
+ 
+        html_output += "<script>\n"
+        html_output += "  $(function() {\n"
+        html_output += "    $( \"#" + field.html_name.encode("utf-8") + "_add\" ).click(function(e) {\n"
+        html_output += "      e.preventDefault();\n"
+        html_output += "      $( \"#" + field.html_name.encode("utf-8") + "_container\" ).append( '<div class=\"row form-group\">' + $( \"#" + field.html_name.encode("utf-8") + "_placeholder\").html() + '</div>');\n"
+        html_output += "    });\n"
+        html_output += "  });\n"
+        html_output += "</script>\n"
+
+        sub_field_number = len(field.setting_input_group_sub_fields)
+        column_width = 12 / sub_field_number
+
+        html_output += "<div class=\"hff hff_input_group form-group\" data-sub-field-number=\"" + str(sub_field_number) + "\" data-html-name=\"" + field.html_name.encode("utf-8") + "\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label><br/>\n"
+        
+        html_output += "  <div id=\"" + str(field.html_name) + "_container\">\n"
+        html_output += "    <div id=\"" + str(field.html_name) + "_placeholder\" class=\"row form-group\">\n"
+        
+        for sub_field in field.setting_input_group_sub_fields:
+            html_output += "      <div class=\"col-md-" + str(column_width) + "\"><input type=\"text\" class=\"form-control\" data-sub-field-name=\"" + str(sub_field.name) + "\" placeholder=\"" + str(sub_field.field_description) + "\"/></div>\n"
+
+	html_output += "    </div>\n"
+        html_output += "  </div>\n"
+        
+        html_output += "  <div class=\"col-md-12\">\n"
+        html_output += "    <button class=\"btn btn-primary btn-md row pull-right\" id=\"" + field.html_name.encode("utf-8") + "_add\">Add (+)</button>\n"
+        html_output += "  </div>\n"
+
+	html_output += "</div>\n"
+	
+	return html_output
+
     def _generate_html_radio_group_selection(self, field):
         """Generate Radio Group(Selection) HTML"""
         html_output = ""
-        html_output += "<div class=\"hff html_form_field form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
-	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label><br/>\n"
-	
+        html_output += "<div class=\"hff hff_radio_group form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+
+    	if field.setting_radio_group_layout_type == "multi":
+	    html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label>\n"
+    	if field.setting_radio_group_layout_type == "single":
+	    html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label + "</label><br/>\n"
+
     	selection_list = dict(request.env[field.field_id.model_id.model]._columns[field.field_id.name].selection)
     	        
     	for selection_value,selection_label in selection_list.items():
-    	    html_output += "  <input type=\"radio\" name=\"" + field.html_name.encode("utf-8") + "\" value=\"" + selection_value.encode("utf-8") + "\"/> " + selection_label.encode("utf-8") + "<br/>\n"
-	
+    	    if field.setting_radio_group_layout_type == "multi":
+    	       html_output += "  <div class=\"radio\">\n"
+    	    if field.setting_radio_group_layout_type == "single":
+    	       html_output += "  <div class=\"radio-inline\">\n"
+    	    
+    	    html_output += "    <label><input type=\"radio\" name=\"" + field.html_name.encode("utf-8") + "\" value=\"" + selection_value.encode("utf-8") + "\"/>" + selection_label.encode("utf-8") + "</label>\n"
+    	    html_output += "  </div>\n"
+    	    
+	html_output += "\n"	
 	html_output += "</div>\n"
 	
 	return html_output
@@ -170,43 +246,17 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
     def _generate_html_checkbox_boolean(self, field):
         """Generate Checkbox(Boolean) HTML"""
         html_output = ""
-        html_output += "<div class=\"hff html_form_field checkbox\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+        html_output += "<div class=\"hff hff_checkbox checkbox\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
 	html_output += "  <label><input type=\"checkbox\" name=\"" + field.html_name.encode("utf-8") + "\"/>" + field.field_label + "</label>\n"
 	html_output += "</div>\n"
 	
 	return html_output
 
     def _generate_html_dropbox(self, field):
-        """Generates a dropbox(Selection)"""
+        """Generates a dropbox(Selection and many2one)"""
         html_output = ""
         
-        if field.field_id.ttype == "selection":
-            html_output += "<div class=\"hff html_form_field form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
-	    html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label
-            html_output += "</label>\n"
-	    html_output += "  <select class=\"form-control\" name=\"" + field.html_name.encode("utf-8") + "\""
-                		    
-	    if field.setting_general_required == True:
-	        html_output += " required=\"required\""
-	        
-    	    html_output += ">\n"
-    	    html_output += "    <option value=\"\">Select Option</option>\n"
-    
-    	    selection_list = dict(request.env[field.field_id.model_id.model]._columns[field.field_id.name].selection)
-    	        
-    	    for selection_value,selection_label in selection_list.items():
-    	        html_output += "    <option value=\"" + selection_value.encode("utf-8") + "\">" + selection_label.encode("utf-8") + "</option>\n"
-    	        
-    	    html_output += "  </select>\n"
-    	    html_output += "</div>\n"
-    	    
-    	    return html_output
-    
-    def _generate_html_dropbox_m2o(self, field):
-        """Generates a dropbox(Many2one)"""
-        html_output = ""
-        
-        html_output += "<div class=\"hff html_form_field form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
+        html_output += "<div class=\"hff hff_dropbox form-group\" data-form-type=\"" + field.field_type.html_type + "\" data-field-id=\"" + str(field.id) + "\">\n"
 	html_output += "  <label class=\"control-label\" for=\"" + field.html_name.encode("utf-8") + "\">" + field.field_label
         html_output += "</label>\n"
 	html_output += "  <select class=\"form-control\" name=\"" + field.html_name.encode("utf-8") + "\""
@@ -216,12 +266,19 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
 	        
     	html_output += ">\n"
     	html_output += "    <option value=\"\">Select Option</option>\n"
-    
 
-        selection_list = request.env[field.field_id.relation].search([])
+        if field.field_id.ttype == "selection":
+    
+    	    selection_list = dict(request.env[field.field_id.model_id.model]._columns[field.field_id.name].selection)
     	        
-    	for row in selection_list:
-    	    html_output += "    <option value=\"" + str(row.id) + "\">" + row.name + "</option>\n"
+    	    for selection_value,selection_label in selection_list.items():
+    	        html_output += "    <option value=\"" + selection_value.encode("utf-8") + "\">" + selection_label.encode("utf-8") + "</option>\n"
+    	        
+    	elif field.field_id.ttype == "many2one":
+            selection_list = request.env[field.field_id.relation].search([])
+    	        
+    	    for row in selection_list:
+    	        html_output += "    <option value=\"" + str(row.id) + "\">" + row.name + "</option>\n"
     	        
     	html_output += "  </select>\n"
     	html_output += "</div>\n"
@@ -328,7 +385,10 @@ class HtmlFormControllerSnippets(openerp.addons.html_form_builder.controllers.ma
         if 'format_validation' in values: insert_values['validation_format'] = values['format_validation']
         if 'character_limit' in values: insert_values['character_limit'] = values['character_limit']
         if 'setting_general_required' in values: insert_values['setting_general_required'] = values['field_required']
-        
+        if 'layout_type' in values: insert_values['setting_radio_group_layout_type'] = values['layout_type']        
+        if 'setting_date_format' in values: insert_values['setting_date_format'] = values['setting_date_format']
+        if 'sub_fields' in values: insert_values['setting_input_group_sub_fields'] = [(6, 0, [int(i) for i in values['sub_fields'] ] )]
+
         form_field = request.env['html.form.field'].create(insert_values)
         
         form_string = ""

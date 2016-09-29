@@ -1,3 +1,25 @@
+v.1.8.9
+=======
+* Input group snippet (one2many)
+* Datetime snippet
+
+v.1.8.8
+=======
+* Checkbox config window
+
+v.1.8.7
+=======
+* Date picker date format
+
+v.1.8.6
+=======
+* Date picker config window
+* Radio group html adjustments
+
+v.1.8.5
+=======
+* Radio group config window
+
 v.1.8.4
 =======
 * Offset snippet drag and drop to make it easier to drag fields beside each other
