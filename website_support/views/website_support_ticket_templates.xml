@@ -69,6 +69,7 @@
             <field name="body_html"><![CDATA[
                 ${(object.body)|safe}
                 <hr/>
+                <b>View Ticket Online:</b> <a href="/support/portal/ticket/view/${object.ticket_id.portal_access_key}">here</a><br/>
                 <b>Ticket Number:</b> ${object.ticket_id.id}<br/>
                 <b>Ticket Category:</b> ${object.ticket_id.category.name}<br/>
                 <b>Ticket Description:</b><br/>
@@ -173,7 +174,7 @@
                 <table class="table table-striped table-bordered table-hover table-condensed">
                     <tr><th>From</th><th>Message</th></tr>
                     <t t-foreach="support_ticket.conversation_history" t-as="chat">
-                        <tr><td><t t-esc="chat.create_uid.name"/></td><td><t t-esc="chat.content"/></td></tr>
+                        <tr><td><t t-esc="chat.create_uid.name"/></td><td><t t-raw="chat.content"/></td></tr>
                     </t>
                 </table>
                 

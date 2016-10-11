@@ -19,6 +19,7 @@ class SaasDatabase(models.Model):
     backup_ids = fields.One2many('ir.attachment', 'saas_database_id', string="Backups")
     user_id = fields.Many2one('res.users', string="SAAS User")
     access_url = fields.Char(string="Access URL", compute="_compute_access_url")
+    domain_ids = fields.One2many('saas.database.domain', 'database_id', string="Domains")
     
     @api.depends('name')
     def _compute_access_url(self):
@@ -28,4 +29,3 @@ class SaasDatabase(models.Model):
             self.access_url = "http://" + request.httprequest.host + "/web?db=" + self.name
         elif system_redirect == "subdomain":
             self.access_url = "http://" + self.name + "." + request.httprequest.host
-
