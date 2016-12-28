@@ -1,3 +1,19 @@
+v1.0.8
+======
+* SMS queuing in position for mass sms
+
+v1.0.7
+======
+* MMS template sending fix
+
+v1.0.6
+======
+* MMS templates
+
+v1.0.5
+======
+* MMS framework
+
 v1.0.4
 ======
 * Fix template send sms code

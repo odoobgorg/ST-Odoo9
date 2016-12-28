@@ -70,6 +70,7 @@ class SmsTemplate(models.Model):
     lang = fields.Char(string='Language', help="Optional translation language (ISO code) to select when sending out an email. If not set, the english version will be used. This should usually be a placeholder expression that provides the appropriate language, e.g. ${object.partner_id.lang}.", placeholder="${object.partner_id.lang}")
     from_mobile_verified_id = fields.Many2one('sms.number', string="From Mobile (stored)")
     from_mobile = fields.Char(string="From Mobile", help="Placeholders are allowed here")
+    media_id = fields.Binary(string="Media(MMS)")
         
     @api.onchange('model_object_field_id')
     def _onchange_model_object_field_id(self):
@@ -102,7 +103,7 @@ class SmsTemplate(models.Model):
          
         gateway_model = my_template.from_mobile_verified_id.account_id.account_gateway_id.gateway_model_name
         
-	my_sms = self.env[gateway_model].send_message(my_template.from_mobile_verified_id.account_id.id, my_template.from_mobile_verified_id.mobile_number, rendered_sms_to, sms_rendered_content, my_template.model_id.model, record_id)
+	my_sms = self.env[gateway_model].send_message(my_template.from_mobile_verified_id.account_id.id, my_template.from_mobile_verified_id.mobile_number, rendered_sms_to, sms_rendered_content, my_template.model_id.model, record_id, my_template.media_id)
 	
     def render_template(self, template, model, res_id):
         """Render the given template text, replace mako expressions ``${expr}``

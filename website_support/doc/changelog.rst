@@ -1,3 +1,18 @@
+v1.7.14
+=======
+* Anti spam for support ticket form
+* Prevent upload of exe's
+
+v1.7.13
+=======
+* fix email support ticket link returning false(again)...
+
+v1.7.12
+=======
+* Fix email support ticket link returning false
+* Send initial email after ticket is submitted
+
+
 v1.7.11
 =======
 * Portal access for publicly sent tickets
